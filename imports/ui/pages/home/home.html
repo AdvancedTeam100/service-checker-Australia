@@ -1,0 +1,261 @@
+<Template name="home">
+    <style>
+        .colContent {
+            width: 100vw;
+            overflow-x: hidden;
+        }
+
+        .ui-datepicker-trigger {
+            height: 38px !important;
+        }
+
+        .dataTables_wrapper {
+            min-height: 40vh !important;
+        }
+
+        .columnSettings {
+            font-size: 16px !important;
+        }
+    </style>
+    <div class="row top" id="bodyContainer">
+        <div class="col d-flex flex-column colContent" id="colContent">
+            <div id="content">
+                <nav class="navbar navbar-light navbar-expand bg-white shadow topbar static-top mb-4">
+                    <div class="container-fluid">
+                        <div class="d-sm-inline-block mr-auto ml-md-3 my-2 my-md-0 mw-100">
+                        </div>
+                
+                        <div style="width: 215px;" class="vs1logodesktop">
+                            <img class="img-support" src="images/VS1logo.png" style="width: 100%;">
+                        </div>
+                
+                        <ul class="nav navbar-nav flex-nowrap ml-auto">
+                
+                            <div class="d-none d-sm-block topbar-divider"></div>
+                
+                            <li class="nav-item dropdown no-arrow" role="presentation">
+                                <div class="nav-item dropdown no-arrow">
+                                  <a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false" href="#">
+                                    <span class="d-none d-lg-inline mr-2 text-gray-600 small" id="logged_user"></span>
+                                    <img class="border rounded-circle img-profile" src="img/avatar.png">
+                                  </a>
+                                    <div class="dropdown-menu shadow dropdown-menu-right animated--grow-in" role="menu">
+                                        <a class="dropdown-item" role="presentation" href="#" onclick="logOutFunc()">
+                                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>&nbsp;Logout</a>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <div class="fullScreenSpin" style="display:none;">
+                    <div class="spinner"></div>
+                </div>
+                <header style="padding: 16px;padding-bottom: 0px; background-color: #ededed;">
+                    <div class="row">
+                        <div class="col-12 col-md-4">
+                            <h2 style="margin: 16px;">VS1 Services</h2>
+                        </div>
+                    </div>
+                </header>
+                <div class="row d-xl-flex flex-row justify-content-xl-center" style="padding: 0px 20px; background-color: #ededed;">
+                    <div class="col float-left flex-grow-1 mb-4">
+                        <button class="btn btn-primary btnRefresh" type="button" style="margin: 12px;"><i class="la la-lightbulb-o" style="padding-right: 5px;"></i>Refresh</button>
+                    </div>
+                    <div class="col d-xl-flex justify-content-xl-end align-items-xl-start">
+                        {{> export_import_print_display_button tablename="tblServicesList"}}
+                    </div>
+                </div>
+
+                <div style="padding: 0px 12px;">
+                    <div class="card-body p-3 rounded">
+                        <style>
+                            #tblServicesList tbody td{
+                                vertical-align: middle;
+                            }
+                            .table-responsive{
+                                overflow-x: hidden!important
+                            }
+                            .bgcolor-green{
+                                background-color: #1cc88a;
+                            }
+                            .bgcolor-red{
+                                background-color: #e74a3b;
+                            }
+                            .bgcolor-orange{
+                                background-color: #fd7e14;
+                            }
+                            .td-text-color{
+                                color: white;
+                            }
+                            .td-button{
+                                padding: 5px !important;
+                                text-align: center;
+                            }
+                        </style>
+                        <!-- {{> datatablelist
+                            tablename="tblServicesList"
+                            apiName=apiFunction
+                            indexeddbname='TSerialNumberListCurrentReport'
+                            tableheaderrecords=tableheaderrecords
+                            exportfilename='Pay Calendars'
+                            apiParams=apiParams
+                            istransaction = false
+                            datahandler=datahandler
+                            service=service
+                            lowercaseDataName='tserialnumberlistcurrentreport'
+                            exIndexDBName='tserialnumberlistcurrentreport'
+                            exdatahandler=exDataHandler
+                            searchAPI=searchAPI
+                        }} -->
+                        {{> non_transactional_list tablename = "tblServicesList"}}
+                    </div>
+                    <div class="row no-gutters">
+                        <div class="col d-xl-flex justify-content-xl-center align-items-xl-center" style="text-align:center">
+                            <button class="btn btn-success btnAdmin" type="button" style="margin: 16px;">Admin</button>
+                            <button class="btn btn-secondary btnBack" type="button" style="margin: 16px;">Log Off</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" role="dialog" tabindex="-1" id="editServiceChecker">
+        {{> editServiceCheckerModal}}
+    </div>
+
+    <div class="modal fade" role="dialog" tabindex="-1" id="machineSummaryList">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Machine Summary</h4><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                </div>
+                <div class="modal-body">
+                    <style>
+                        #tblMachineSummaryList .colDate{
+                            width: 50%!important
+                        }
+                        #tblMachineSummaryList .colCountStatus{
+                            width: 50%!important
+                        }
+                    </style>                    
+                    <!-- {{> datatablelist
+                            tablename="tblMachineSummaryList"
+                            apiName=apiFunction
+                            indexeddbname='TSerialNumberListCurrentReport'
+                            tableheaderrecords=tableheaderrecords
+                            exportfilename='Pay Calendars'
+                            apiParams=apiParams
+                            istransaction = false
+                            datahandler=datahandler
+                            service=service
+                            lowercaseDataName='tserialnumberlistcurrentreport'
+                            exIndexDBName='tserialnumberlistcurrentreport'
+                            exdatahandler=exDataHandler
+                            searchAPI=searchAPI
+                        }} -->
+                    {{> non_transactional_list tablename = "tblMachineSummaryList"}}
+                </div>
+                <div class="modal-footer">
+                    <!-- <button class="btn btn-primary btnDepartmentSelect" type="button"><i class="fa fa-save" style="margin-right: 8px;"></i>Ok</button> -->
+                    <button class="btn btn-secondary" data-dismiss="modal" type="button"><i class="fa fa-close" style="margin-right: 8px;"></i>Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" role="dialog" tabindex="-1" id="machineDetailList">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Machine Detail</h4><button type="button" class="close close-machine" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                </div>
+                <div class="modal-body">
+                    <style>
+                        #tblMachineDetailList .colTime{
+                            width: 50%!important
+                        }
+                        #tblMachineDetailList .colStatus{
+                            width: 50%!important
+                        }
+                    </style>
+                    <!-- {{> datatablelist
+                            tablename="tblMachineDetailList"
+                            apiName=apiFunction
+                            indexeddbname='TSerialNumberListCurrentReport'
+                            tableheaderrecords=tableheaderrecords
+                            exportfilename='Pay Calendars'
+                            apiParams=apiParams
+                            istransaction = false
+                            datahandler=datahandler
+                            service=service
+                            lowercaseDataName='tserialnumberlistcurrentreport'
+                            exIndexDBName='tserialnumberlistcurrentreport'
+                            exdatahandler=exDataHandler
+                            searchAPI=searchAPI
+                        }} -->
+                    {{> non_transactional_list tablename = "tblMachineDetailList"}}
+                </div>
+                <div class="modal-footer">
+                    <!-- <button class="btn btn-primary btnDepartmentSelect" type="button"><i class="fa fa-save" style="margin-right: 8px;"></i>Ok</button> -->
+                    <button class="btn btn-secondary" data-dismiss="modal" type="button"><i class="fa fa-close" style="margin-right: 8px;"></i>Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" role="dialog" tabindex="-1" id="copyFrequencyModal">
+        {{> copyfrequencypop}}
+    </div>
+
+    <div class="modal fade" role="dialog" tabindex="-1" id="adminService">
+        <!-- {{> adminServiceModal}} -->
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Who Receives Messages</h4><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                </div>
+                <div class="modal-body">
+                    <style>
+                        #tblAdminServiceList .colAddress{
+                            width: 40%!important
+                        }
+                        #tblAdminServiceList .colPassword{
+                            width: 30%!important
+                        }
+                        #tblAdminServiceList .colSMS{
+                            width: 30%!important
+                        }
+                    </style>
+                        <!-- {{> datatablelist
+                            tablename="tblAdminServiceList"
+                            apiName=apiFunction
+                            indexeddbname='TSerialNumberListCurrentReport'
+                            tableheaderrecords=tableheaderrecords
+                            exportfilename='Pay Calendars'
+                            apiParams=apiParams
+                            istransaction = false
+                            datahandler=datahandler
+                            service=service
+                            lowercaseDataName='tserialnumberlistcurrentreport'
+                            exIndexDBName='tserialnumberlistcurrentreport'
+                            exdatahandler=exDataHandler
+                            searchAPI=searchAPI
+                        }} -->
+                    {{> non_transactional_list tablename = "tblAdminServiceList"}}
+
+                </div>
+                <div class="modal-footer">
+                    <!-- <button class="btn btn-primary btnDepartmentSelect" type="button"><i class="fa fa-save" style="margin-right: 8px;"></i>Ok</button> -->
+                    <button class="btn btn-secondary" data-dismiss="modal" type="button"><i class="fa fa-close" style="margin-right: 8px;"></i>Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- End Help Video Modal -->
+    <script>
+        modalDraggable();
+    </script>
+</Template>
