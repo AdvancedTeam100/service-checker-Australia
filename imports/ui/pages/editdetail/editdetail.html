@@ -1,0 +1,156 @@
+<template name="editdetail">
+    <div class="row top" id="bodyContainer">
+        <div class="col d-flex flex-column colContent" id="colContent">
+            <div id="content">
+                <nav class="navbar navbar-light navbar-expand bg-white shadow topbar static-top mb-4">
+                    <div class="container-fluid">
+                        <div class="d-sm-inline-block mr-auto ml-md-3 my-2 my-md-0 mw-100">
+                        </div>
+
+                        <div style="width: 215px;" class="vs1logodesktop">
+                            <img class="img-support" src="images/VS1logo.png" style="width: 100%;">
+                        </div>
+
+                        <ul class="nav navbar-nav flex-nowrap ml-auto">
+
+                            <div class="d-none d-sm-block topbar-divider"></div>
+
+                            <li class="nav-item dropdown no-arrow" role="presentation">
+                                <div class="nav-item dropdown no-arrow">
+                                    <a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false"
+                                        href="#">
+                                        <span class="d-none d-lg-inline mr-2 text-gray-600 small"
+                                            id="logged_user"></span>
+                                        <img class="border rounded-circle img-profile" src="img/avatar.png">
+                                    </a>
+                                    <div class="dropdown-menu shadow dropdown-menu-right animated--grow-in" role="menu">
+                                        <a class="dropdown-item" role="presentation" href="#" onclick="logOutFunc()">
+                                            <i
+                                                class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>&nbsp;Logout</a>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <div class="fullScreenSpin" style="display:none;">
+                    <div class="spinner"></div>
+                </div>
+                <header style="padding: 16px; background-color: #ededed;">
+                    <div class="row">
+                        <div class="col-12 col-md-4">
+                            <h2 style="margin: 16px;">VS1 Services</h2>
+                        </div>
+                    </div>
+                </header>
+                <input type="hidden" id="edtFlag" />
+                <input type="hidden" id="edtID" />
+
+                <div class="row" style="margin-top: 50px;">
+                    <div class="col-4"></div>
+                    <div class="col-4">
+                        <div class="card shadow mb-3">
+                            <div class="card-header accountslistheader d-flex justify-content-between align-items-center ui-sortable-handle">
+                                <h3 style="text-align: center;">Edit detail</h3>
+                            </div>
+                            <div class="row" style="padding: 0 30px 30px 30px;">
+                                <div class="col-12 col-md-6">
+                                    <div class="form-group" style="margin: 4px;">
+                                        <label>Machine Name</label>
+                                        <input type="text" class="form-control" id="edtMachineName"
+                                            name="edtMachineName">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="form-group" style="margin: 4px;"><label>Service Name</label>
+                                        <input type="text" class="form-control" id="edtServiceName"
+                                            name="edtServiceName">
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group" style="margin: 4px;">
+                                        <label>Description</label>
+                                        <textarea class="form-control" rows="3" id="edtMachineDescription"
+                                            name="edtMachineDescription"></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <div class="form-group" style="margin: 4px;"><label>IP Address</label>
+                                        <input type="text" class="form-control" id="edtIPAddress" name="edtIPAddress">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <div class="form-group" style="margin: 4px;"><label>Port</label>
+                                        <input type="text" class="form-control" id="edtPort" name="edtPort">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <div class="form-group" style="margin: 4px;"><label>Status</label>
+                                        <input type="text" class="form-control" id="edtStatus" name="edtStatus"
+                                            readonly>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+
+                                </div>
+                                <div class="col-12 col-md-12 justify-content-between align-items-center button-group">
+                                    <div class="row" style="margin-top: 35px;">
+                                        <div class="col-md-4">
+                                            <button class='btn btn-warning btnMachineCheck'
+                                                type='button'>Checks</button>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class='btn btn-danger btnMachineRestart'
+                                                type='button'>Restarts</button>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class='btn btn-success btnMachineFrequency'
+                                                type='button'>Frequency</button>
+                                        </div>
+                                    </div>
+                                    <div class="row" style="margin-top: 20px;">
+                                        <div class="col-md-4">
+                                            <button class='btn btn-primary btnMachineLogs' type='button'>Get
+                                                logs</button>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class='btn btn-primary btnMachineSummary'
+                                                type='button'>Summary</button>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class='btn btn-primary btnMachineDetail'
+                                                type='button'>Detail</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-header accountslistheader d-flex justify-content-between align-items-center ui-sortable-handle">
+                                <button class="btn btn-success btnSaveMachine vs1FirstButtonMargin" type="button" id="btnSaveMachine" name="btnSaveMachine"><i class="fa fa-save" style="margin-right: 5px;"></i>Save</button>
+                              </div>
+                        </div>
+
+                    </div>
+                    <div class="col-3"></div>
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" id="machineSummaryList">
+        {{> machinesummarypop}}
+    </div>
+
+    <div class="modal fade" role="dialog" tabindex="-1" id="machineLogsList">
+        {{> logspop}}
+    </div>
+
+    <div class="modal fade" role="dialog" tabindex="-1" id="machineDetailList">
+        {{> machinedetailpop}}
+    </div>
+
+    <div class="modal fade" role="dialog" tabindex="-1" id="copyFrequencyModal">
+        {{> copyfrequencypop}}
+    </div>
+</template>

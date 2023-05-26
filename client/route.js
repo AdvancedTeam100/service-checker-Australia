@@ -51,4 +51,11 @@ authenticatedRoutes.route('/home', {
   },
 });
 
+authenticatedRoutes.route('/editdetail', {
+  name: 'editdetail',
+  action() {
+    BlazeLayout.render('MainLayout', { yield: 'editdetail' });
+  },
+});
+
 

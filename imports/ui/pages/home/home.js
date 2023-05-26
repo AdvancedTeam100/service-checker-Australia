@@ -1,318 +1,416 @@
 import { ReactiveVar } from 'meteor/reactive-var';
-import { SideBarService } from '../../js/sidebar-service';
+import { UtilityService } from '../../js/utility-service';
 import { Template } from 'meteor/templating';
-import { FlowRouter } from 'meteor/ostrio:flow-router-extra';
+import moment from "moment";
+import net from 'net';
+import XLSX from "xlsx";
 import 'jquery';
 import 'bootstrap';
 import "./home.html";
 
-
-// Define services
-let sideBarService = new SideBarService();
 Template.home.onCreated(function() {
     const templateObject = Template.instance();
     templateObject.datatablerecords = new ReactiveVar([]);
     templateObject.tableheaderrecords = new ReactiveVar([]);
+    templateObject.selectedFile = new ReactiveVar();
+    templateObject.dataList = new Array();
+    templateObject.adminList = new Array();
 
     let headerStruct = [
-        { index: 0, label: 'Machine Name', class: 'colMachineName', active: true, display: true, width: "" },
-        { index: 1, label: 'IP Address', class: 'colIPAddress', active: true, display: true, width: "" },
-        { index: 2, label: 'Status', class: 'colStatus', active: true, display: true, width: "" },
-        { index: 3, label: 'Check', class: 'colCheck', active: true, display: true, width: "" },
-        { index: 4, label: 'Restart', class: 'colRestart', active: true, display: true, width: "" },
-        { index: 5, label: 'Edit', class: 'colEdit', active: true, display: true, width: "" },
+        { index: 0, label: 'ID', class: 'colID', active: false, display: true, width: "10" },
+        { index: 1, label: 'Machine Name', class: 'colMachineName', active: true, display: true, width: "150" },
+        { index: 2, label: 'Service Name', class: 'colServiceName', active: true, display: true, width: "150" },
+        { index: 3, label: 'IP Address', class: 'colIPAddress', active: true, display: true, width: "100" },
+        { index: 4, label: 'Port Number', class: 'colPortNumber', active: true, display: true, width: "80" },
+        { index: 5, label: 'Status', class: 'colStatus', active: true, display: true, width: "120" },
+        { index: 6, label: 'Description', class: 'colDescription', active: true, display: true, width: "250" },
+        { index: 7, label: 'Description', class: 'colDesc', active: false, display: true, width: "250" },
+        { index: 8, label: 'Action', class: 'colAction', active: true, display: true, width: "150" },
     ];
     templateObject.tableheaderrecords.set(headerStruct);
 
     templateObject.getDataTableList = function (data) {
-        console.log(data)
-        data = splashArrayTimeSheetList;
-        let dataList = [
-            data[0],
-            data[1],
-            data[2],
-            data[3],
-            data[4],
-            data[5],
-        ];
-        return dataList;
     }
 
-    let splashArrayTimeSheetList = new Array();
-    let cssclass = '';
-    cssclass = "bgcolor-green";
-    var dataTimeSheetList = [
-        "Machine-1",
-        "100.100.100.100",
-        "06/03/2023 20:30:30",
-        "<button class='btn btn-warning btnServiceCheck' type='button'>Checks</button>",
-        "<button class='btn btn-danger btnServiceRestart' type='button'>Restarts</button>",
-        "<button class='btn btn-success btnServiceEdit' type='button'>Edit</button>",
-        cssclass
-    ];
-    splashArrayTimeSheetList.push(dataTimeSheetList);
+    templateObject.getServiceList = async function (page = 1) {
+        await HTTP.call('GET', '/api/machines?num=' + page, (error, response) => {
+            if (error) {
+            } else {
+                for(i = 0; i < response.data.length; i ++) {
+                    let res = [
+                        response.data[i].id,
+                        response.data[i].name,
+                        response.data[i].service_name,
+                        response.data[i].ip,
+                        response.data[i].port,
+                        response.data[i].description.length > 35 ? response.data[i].description.substring(0, 34) + "..." : response.data[i].description,
+                        response.data[i].description,
+                        response.data[i].status,
+                        `<button class='btn btn-warning btnServiceCheck' type='button'>Checks</button>
+                        <button class='btn btn-danger btnServiceRestart' type='button'>Restart</button>
+                        <button class='btn btn-success btnServiceEdit' type='button'>Edit</button>`
+                    ];
+                    templateObject.dataList.push(res);
+                }
+            }
+        });
+    };
 
-    cssclass = "bgcolor-red";
-    var dataTimeSheetList = [
-        "Machine-2",
-        "100.100.100.101",
-        "04/03/2023 10:30:30",
-        "<button class='btn btn-warning btnServiceCheck' type='button'>Checks</button>",
-        "<button class='btn btn-danger btnServiceRestart' type='button'>Restarts</button>",
-        "<button class='btn btn-success btnServiceEdit' type='button'>Edit</button>",
-        cssclass
-    ];
-    splashArrayTimeSheetList.push(dataTimeSheetList);
+    templateObject.getAdminList = async function (page) {
+        await HTTP.call('GET', '/api/admin?num=' + page, (error, response) => {
+            if (error) {
+                swal({
+                    title: "Oooops...",
+                    text: error,
+                    type: "error",
+                    showCancelButton: false,
+                    confirmButtonText: "Try Again",
+                }).then((result) => {
+                    if (result.value) {
+                        window.open("/home", "_self");
+                    } else if (result.dismiss === "cancel") {
+                        
+                    }
+                });
+            } else {
+                for(i = 0; i < response.data.length; i ++) {
+                    let res = [
+                        response.data[i].id,
+                        response.data[i].name,
+                        response.data[i].email,
+                        response.data[i].password,
+                        response.data[i].sms_number,
+                    ];
+                    templateObject.adminList.push(res);
+                }
+            }
+        });
+    };
 });
 
 Template.home.onRendered(function() {
+    const templateObject = Template.instance();
+    templateObject.getServiceList();
 
     $('.fullScreenSpin').css('display', 'inline-block');
-    let templateObject = Template.instance();
+    let DataCount = templateObject.dataList.length;
 
-    function MakeNegative() {
-        $('td').each(function() {
-            if ($(this).text().indexOf('-' + Currency) >= 0) $(this).addClass('text-danger')
-        });
-
-        $("td.colStatus").each(function() {
-            if ($(this).text() == "In-Active") $(this).addClass("text-deleted");
-            if ($(this).text() == "Deleted") $(this).addClass("text-deleted");
-            if ($(this).text() == "Full") $(this).addClass("text-fullyPaid");
-            if ($(this).text() == "Part") $(this).addClass("text-partialPaid");
-            if ($(this).text() == "Rec") $(this).addClass("text-reconciled");
-        });
-    }
-
-    Meteor.call('readPrefMethod', localStorage.getItem('mycloudLogonID'), 'tblSerialNumberList', function(error, result) {
-        if (error) {
-
-        } else {
-            if (result) {
-
-                for (let i = 0; i < result.customFields.length; i++) {
-                    let customcolumn = result.customFields;
-                    let columData = customcolumn[i].label;
-                    let columHeaderUpdate = customcolumn[i].thclass.replace(/ /g, ".");
-                    let hiddenColumn = customcolumn[i].hidden;
-                    let columnClass = columHeaderUpdate.split('.')[1];
-                    let columnWidth = customcolumn[i].width;
-                    // let columnindex = customcolumn[i].index + 1;
-                    $("th." + columnClass + "").html(columData);
-                    $("th." + columnClass + "").css('width', "" + columnWidth + "px");
-
+    $('.fullScreenSpin').css('display', 'none');
+    setTimeout(function() {
+        DataCount = templateObject.dataList.length;
+        $('#tblServicesList').DataTable({
+            dom: 'BRlfrtip',
+            data: templateObject.dataList,
+            "sDom": "<'row'><'row'<'col-sm-12 col-md-8'f><'col-sm-12 col-md-4'l>r>t<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>B",
+            columnDefs: [
+                {
+                    className: "colID hiddenColumn",
+                    targets: 0,
+                    width:'10'
+                },
+                {
+                    className: "colMachineName",
+                    targets: 1,
+                    width:'150'
+                },
+                {
+                    className: "colServiceName",
+                    targets: 2,
+                    width:'150'
+                },
+                {
+                    className: "colIPAddress",
+                    targets: 3,
+                    width:'100',
+                },
+                {
+                    className: "colPortNumber",
+                    targets: 4,
+                    width:'80',
+                },
+                {
+                    className: "colDescription",
+                    targets: 5,
+                    width:'250',
+                },
+                {
+                    className: "colDesc hiddenColumn",
+                    targets: 6,
+                    width:'250',
+                },
+                {
+                    className: "colStatus",
+                    targets: 7,
+                    width:'120',
+                },
+                {
+                    className: "colAction",
+                    targets: 8,
+                    width:'250',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        $(td).addClass("td-button");
+                    }
                 }
+            ],
+            'select': {
+                'style': 'multi'
+            },
+            buttons: [{
+                    extend: 'csvHtml5',
+                    text: '',
+                    download: 'open',
+                    className: "btntabletocsv hiddenColumn",
+                    filename: "Service List",
+                    orientation: 'portrait',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                }, {
+                    extend: 'print',
+                    download: 'open',
+                    className: "btntabletopdf hiddenColumn",
+                    text: '',
+                    title: 'Service List',
+                    filename: "Service List",
+                    exportOptions: {
+                        columns: ':visible',
+                        stripHtml: false
+                    }
+                },
+                {
+                    extend: 'excelHtml5',
+                    title: '',
+                    download: 'open',
+                    className: "btntabletoexcel hiddenColumn",
+                    filename: "Service List",
+                    orientation: 'portrait',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                }
+            ],
+            select: true,
+            destroy: true,
+            colReorder: true,
+            pageLength: initialDatatableLoad,
+            lengthMenu: [
+                [initialDatatableLoad, -1],
+                [initialDatatableLoad, "All"]
+            ],
+            info: true,
+            responsive: true,
+            "order": [
+                [1, "asc"]
+            ],
+            "autoWidth": false,
+            action: function() {
+                $('#tblServicesList').DataTable().ajax.reload();
+            },
+            "fnDrawCallback": function(oSettings) {
+                $('.paginate_button.page-item').removeClass('disabled');
+                $('#tblServicesList' + '_ellipsis').addClass('disabled');
+                if (oSettings._iDisplayLength == -1) {
+                    if (oSettings.fnRecordsDisplay() > 150) {
+                    }
+                } else {
+                }
+                if (oSettings.fnRecordsDisplay() < initialDatatableLoad) {
+                    $('.paginate_button.page-item.next').addClass('disabled');
+                }
+                $('.paginate_button.next:not(.disabled)', this.api().table().container()).on('click', function() {
+                    $('.fullScreenSpin').css('display', 'inline-block');
+
+                });
+            },
+            language: { search: "", searchPlaceholder: "Search..." },
+            "fnInitComplete": function(oSettings) {
+                $("<button class='btn btn-primary' id='NewMachineBtn' name='NewMachineBtn' data-dismiss='modal' data-toggle='modal' type='button' style='padding: 4px 10px; font-size: 16px; margin-left: 12px !important;'><i class='fas fa-plus'></i></button>").insertAfter('#tblServicesList_filter');
+                $("<button class='btn btn-primary btnRefreshList' type='button' id='btnRefreshList' style='padding: 4px 10px; font-size: 16px; margin-left: 14px !important;'><i class='fas fa-search-plus' style='margin-right: 5px'></i>Search</button>").insertAfter('#tblServicesList' + '_filter');
+            },
+            "fnInfoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre) {
+                let countTableData = DataCount || 0; //get count from API data
+                return 'Showing ' + iStart + " to " + iEnd + " of " + countTableData;
             }
-
-        }
-    });
-
-    let splashArrayTimeSheetList = new Array();
-        var url = FlowRouter.current().path;
-        
-        let cssclass = '';
-        cssclass = "bgcolor-green";
-        var dataTimeSheetList = [
-            "Machine-1",
-            "100.100.100.100",
-            "06/03/2023 20:30:30",
-            "<button class='btn btn-warning btnServiceCheck' type='button'>Checks</button>",
-            "<button class='btn btn-danger btnServiceRestart' type='button'>Restarts</button>",
-            "<button class='btn btn-success btnServiceEdit' type='button'>Edit</button>",
-            cssclass
-        ];
-
-        splashArrayTimeSheetList.push(dataTimeSheetList);
-
-        cssclass = "bgcolor-red";
-        var dataTimeSheetList = [
-            "Machine-2",
-            "100.100.100.101",
-            "04/03/2023 10:30:30",
-            "<button class='btn btn-warning btnServiceCheck' type='button'>Checks</button>",
-            "<button class='btn btn-danger btnServiceRestart' type='button'>Restarts</button>",
-            "<button class='btn btn-success btnServiceEdit' type='button'>Edit</button>",
-            cssclass
-        ];
-
-        splashArrayTimeSheetList.push(dataTimeSheetList);
-
-        templateObject.datatablerecords.set(splashArrayTimeSheetList);
-        if (templateObject.datatablerecords.get()) {
-            setTimeout(function() {
-                MakeNegative();
-            }, 100);
-        }
-        $('.fullScreenSpin').css('display', 'none');
-        setTimeout(function() {
-            $('#tblServicesList').DataTable({
-                data: splashArrayTimeSheetList,
-                "sDom": "<'row'><'row'<'col-sm-12 col-md-8'f><'col-sm-12 col-md-4'l>r>t<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>B",
-                columnDefs: [
-                    {
-                        className: "colMachineName",
-                        targets: 0,
-                        width:'8%'
-                    },
-                    {
-                        className: "colIPAddress",
-                        targets: 1,
-                        width:'14%',
-                    },
-                    {
-                        className: "colStatus",
-                        targets: 2,
-                        width:'14%',
-                        createdCell: function (td, cellData, rowData, row, col) {
-                            $(td).addClass("td-text-color");
-                            $(td).addClass(rowData[6]);
-                        }
-                    },
-                    {
-                        className: "colCheck",
-                        targets: 3,
-                        width:'8%',
-                        createdCell: function (td, cellData, rowData, row, col) {
-                            $(td).addClass("td-button");
-                        }
-                    },
-                    {
-                        className: "colRestart",
-                        targets: 4,
-                        width:'8%',
-                        createdCell: function (td, cellData, rowData, row, col) {
-                            $(td).addClass("td-button");
-                        }
-                    },
-                    {
-                        className: "colEdit",
-                        targets: 5,
-                        width:'8%',
-                        createdCell: function (td, cellData, rowData, row, col) {
-                            $(td).addClass("td-button");
-                        }
-                    },
-                ],
-                buttons: [{
-                        extend: 'csvHtml5',
-                        text: '',
-                        download: 'open',
-                        className: "btntabletocsv hiddenColumn",
-                        filename: "STP List",
-                        orientation: 'portrait',
-                        exportOptions: {
-                            columns: ':visible'
-                        }
-                    }, {
-                        extend: 'print',
-                        download: 'open',
-                        className: "btntabletopdf hiddenColumn",
-                        text: '',
-                        title: 'STP List',
-                        filename: "STP List",
-                        exportOptions: {
-                            columns: ':visible',
-                            stripHtml: false
-                        }
-                    },
-                    {
-                        extend: 'excelHtml5',
-                        title: '',
-                        download: 'open',
-                        className: "btntabletoexcel hiddenColumn",
-                        filename: "STP List",
-                        orientation: 'portrait',
-                        exportOptions: {
-                            columns: ':visible'
-                        }
-                    }
-                ],
-                select: true,
-                destroy: true,
-                colReorder: true,
-                pageLength: initialDatatableLoad,
-                lengthMenu: [
-                    [initialDatatableLoad, -1],
-                    [initialDatatableLoad, "All"]
-                ],
-                info: true,
-                responsive: true,
-            //   "order": [
-            //       [1, "asc"]
-            //   ],
-                action: function() {
-                    $('#tblServicesList').DataTable().ajax.reload();
-                },
-                "fnDrawCallback": function(oSettings) {
-                    $('.paginate_button.page-item').removeClass('disabled');
-                    $('#tblServicesList' + '_ellipsis').addClass('disabled');
-                    if (oSettings._iDisplayLength == -1) {
-                        if (oSettings.fnRecordsDisplay() > 150) {
-                        }
-                    } else {
-                    }
-                    if (oSettings.fnRecordsDisplay() < initialDatatableLoad) {
-                        $('.paginate_button.page-item.next').addClass('disabled');
-                    }
-                    $('.paginate_button.next:not(.disabled)', this.api().table().container()).on('click', function() {
-                    });
-                    setTimeout(function() {
-                        MakeNegative();
-                    }, 100);
-                },
-                language: { search: "", searchPlaceholder: "Search..." },
-                "fnInitComplete": function(oSettings) {
-                    // if (deleteFilter == true) {
-                    //     $("<button class='btn btn-danger btnHideDeleted' type='button' id='btnHideDeleted' style='padding: 4px 10px; font-size: 16px; margin-left: 14px !important;'><i class='far fa-check-circle' style='margin-right: 5px'></i>Hide Sold</button>").insertAfter('#tblServicesList' + '_filter');
-                    // } else {
-                    //     $("<button class='btn btn-primary btnViewDeleted' type='button' id='btnViewDeleted' style='padding: 4px 10px; font-size: 16px; margin-left: 14px !important;'><i class='fa fa-trash' style='margin-right: 5px'></i>Show Sold</button>").insertAfter('#tblServicesList' + '_filter');
-                    // }
-                    $("<button class='btn btn-primary btnRefreshList' type='button' id='btnRefreshList' style='padding: 4px 10px; font-size: 16px; margin-left: 14px !important;'><i class='fas fa-search-plus' style='margin-right: 5px'></i>Search</button>").insertAfter('#tblServicesList' + '_filter');
-                },
-                "fnInfoCallback": function(oSettings, iStart, iEnd, iMax, iTotal, sPre) {
-                    let countTableData = 2 || 0; //get count from API data
-                    return 'Showing ' + iStart + " to " + iEnd + " of " + countTableData;
-                }
-            }).on('page', function() {
-                setTimeout(function() {
-                    MakeNegative();
-                }, 100);
-            }).on('column-reorder', function() {
-            }).on('length.dt', function(e, settings, len) {
-                $(".fullScreenSpin").css("display", "inline-block");
-                let dataLenght = settings._iDisplayLength;
-                if (dataLenght == -1) {
-                    if (settings.fnRecordsDisplay() > initialDatatableLoad) {
-                        $(".fullScreenSpin").css("display", "none");
-                    } else {
-                        $(".fullScreenSpin").css("display", "none");
-                    }
+        }).on('page', function() {
+            
+        }).on('column-reorder', function() {
+        }).on('length.dt', function(e, settings, len) {
+            $(".fullScreenSpin").css("display", "inline-block");
+            let dataLenght = settings._iDisplayLength;
+            if (dataLenght == -1) {
+                if (settings.fnRecordsDisplay() > initialDatatableLoad) {
+                    $(".fullScreenSpin").css("display", "none");
                 } else {
                     $(".fullScreenSpin").css("display", "none");
                 }
-                setTimeout(function() {
-                    MakeNegative();
-                }, 100);
+            } else {
+                $(".fullScreenSpin").css("display", "none");
+            }
+        });
+        tableResize();
+        $(".fullScreenSpin").css("display", "none");
+        if(DataCount > 0) {
+            var elements = document.querySelectorAll('.btnServiceCheck');
+            // Add a click event listener to each element
+            elements.forEach(function(element) {
+                element.click();
             });
-            $(".fullScreenSpin").css("display", "none");
-        }, 0);
-        setTimeout(function() {$('div.dataTables_filter input').addClass('form-control form-control-sm');}, 0);
+        }
+    }, 3000);
+    setTimeout(function() {
+        $('div.dataTables_filter input').addClass('form-control form-control-sm');
+        $('#tblServicesList_filter .form-control-sm').focus();
+        $('#tblServicesList_filter .form-control-sm').trigger("input");
+    }, 10);
 
     templateObject.resetData = function(dataVal) {
         Meteor._reload.reload();
     }
+
+    $(".btn-secondary").click(function(){
+        // Get the id of the closest parent element with an id
+        const parentId = $(this).closest('[id]').attr('id');
+        $("#"+parentId).modal("hide");
+    });
+
+    $(".close").click(function(){
+        // Get the id of the closest parent element with an id
+        const parentId = $(this).closest('[id]').attr('id');
+        $("#"+parentId).modal("hide");
+    });
 });
 
 Template.home.events({
-    'click .btnServiceEdit': function(event) {
-        $("#edtMachineName").val("Machine-1");
-        $("#edtMachineDescription").val("Machine-1");
-        $("#edtMachineDescription").val("Machine-1");
-        $("#edtIPAddress").val("100.100.100.100");
-        $("#edtPort").val("80");
-        $("#edtStatus").val("on");
-        $("#edtServiceName").val("API service");
+    'click #NewMachineBtn': function (event) {
+        $('#edtFlag').val('0');
+        $('#add-account-title').text('Add Machine');
+        $("#edtMachineName").val('');
+        $("#edtMachineDescription").val('');
+        $("#edtIPAddress").val('');
+        $("#edtPort").val('');
+        $("#edtStatus").val('');
+        // $('#edtDBName').val('');
+        // $('#edtUserName').val('');
+        // $('#edtPassword').val('');
+        $("#edtServiceName").val('');
+        $('.button-group').removeClass('d-flex');
+        $('.button-group').hide();
         $("#editServiceChecker").modal("toggle");
+    },
+    'click .btnServiceEdit': function(event) {
+        let status = $(event.target).closest("tr").find('.colStatus').hasClass('bgcolor-green') ? 'on' : 'off';
+        location.href ="/editdetail?id="+$(event.target).closest("tr").find('.colID').text()+"&status="+status;
+    },
+    'click .btnSaveMachine': function(event) {
+        $('.fullScreenSpin').css('display', 'inline-block');
+        // Update
+        if($('#edtFlag').val() == '1') {
+            let update_data = {
+                id: $('#edtID').val(),
+                name: $("#edtMachineName").val(),
+                description: $("#edtMachineDescription").val(),
+                ip: $("#edtIPAddress").val(),
+                port: $("#edtPort").val(),
+                status: 'Checking...',
+                // database_name: $('#edtDBName').val(),
+                // username: $('#edtUserName').val(),
+                // password: $('#edtPassword').val(),
+                service_name: $("#edtServiceName").val(),
+            };
+
+            HTTP.call('post', '/api/machine/update', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: update_data,
+            }, (error, result) => {
+                $('.fullScreenSpin').css('display', 'none');
+                if (error) {
+                    swal({
+                        title: "Oooops...",
+                        text: error,
+                        type: "error",
+                        showCancelButton: false,
+                        confirmButtonText: "Try Again",
+                    }).then((result) => {
+                        $('.fullScreenSpin').css('display', 'none');
+                        if (result.value) {
+                            $('#editServiceChecker').modal('toggle');
+                        } else if (result.dismiss === "cancel") {
+                            $('#editServiceChecker').modal('toggle');
+                        }
+                    });
+                } else {
+                    $('.fullScreenSpin').css('display', 'none');
+                    swal({
+                        title: "Succees",
+                        text: "Update Success",
+                        type: "success",
+                        showCancelButton: false,
+                        confirmButtonText: "OK",
+                    }).then((result) => {
+                        $('.fullScreenSpin').css('display', 'none');
+                        if (result.value) {
+                            window.open("/home", "_self");
+                        } else if (result.dismiss === "cancel") {
+                            window.open("/home", "_self");
+                        }
+                    });
+                }
+            });
+        } else if ($('#edtFlag').val() == '0') {
+            let add_data = {
+                name: $("#edtMachineName").val(),
+                description: $("#edtMachineDescription").val(),
+                ip: $("#edtIPAddress").val(),
+                port: $("#edtPort").val(),
+                status: 'Checking...',
+                // database_name: $('#edtDBName').val(),
+                // username: $('#edtUserName').val(),
+                // password: $('#edtPassword').val(),
+                service_name: $("#edtServiceName").val(),
+            };
+            HTTP.call('post', '/api/machines', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: add_data,
+            }, (error, result) => {
+                $('.fullScreenSpin').css('display', 'none');
+                if (error) {
+                    swal({
+                        title: "Oooops...",
+                        text: error,
+                        type: "error",
+                        showCancelButton: false,
+                        confirmButtonText: "Try Again",
+                    }).then((result) => {
+                        $('.fullScreenSpin').css('display', 'none');
+                        if (result.value) {
+                            $('#editServiceChecker').modal('toggle');
+                        } else if (result.dismiss === "cancel") {
+                            $('#editServiceChecker').modal('toggle');
+                        }
+                    });
+                } else {
+                    $('.fullScreenSpin').css('display', 'none');
+                    swal({
+                        title: "Succees",
+                        text: "Add Success",
+                        type: "success",
+                        showCancelButton: false,
+                        confirmButtonText: "OK",
+                    }).then((result) => {
+                        $('.fullScreenSpin').css('display', 'none');
+                        if (result.value) {
+                            window.open("/home", "_self");
+                        } else if (result.dismiss === "cancel") {
+                            window.open("/home", "_self");
+                        }
+                    });
+                }
+            });
+        }
     },
     'click .help-button': function(event) {
         $("#helpViewModal").modal("toggle");
@@ -320,278 +418,206 @@ Template.home.events({
     'click .btntest': function(event){
         $(this).hide();
     },
-    'click .btnMachineSummary': function(event) {
-        $("#machineSummaryList").modal("toggle");
-    },
-    'click .btnMachineDetail': function(event) {
-        $("#machineDetailList").modal("toggle");
-    },
-    'click .btnMachineFrequency': function(event) {
-        playCopyAudio();
-        setTimeout(async function() {
-            $("#basedOnFrequency").prop('checked', true);
-            $('#edtFrequencyDetail').css('display', 'flex');
-            $('#dailySettings #basic-addon2').text('Minutes');
-            $(".ofMonthList input[type=checkbox]").each(function() {
-                $(this).prop('checked', false);
-            });
-            $(".selectDays input[type=checkbox]").each(function() {
-                $(this).prop('checked', false);
-            });
-            $("#copyFrequencyModal").modal("toggle");
-        }, delayTimeAfterSound);
-    },
-    'click input[name="frequencyRadio"]': function(event) {
-        if (event.target.id == "frequencyMonthly") {
-            document.getElementById("monthlySettings").style.display = "block";
-            document.getElementById("weeklySettings").style.display = "none";
-            document.getElementById("dailySettings").style.display = "none";
-            document.getElementById("oneTimeOnlySettings").style.display = "none";
-        } else if (event.target.id == "frequencyWeekly") {
-            document.getElementById("weeklySettings").style.display = "block";
-            document.getElementById("monthlySettings").style.display = "none";
-            document.getElementById("dailySettings").style.display = "none";
-            document.getElementById("oneTimeOnlySettings").style.display = "none";
-        } else if (event.target.id == "frequencyDaily") {
-            document.getElementById("dailySettings").style.display = "block";
-            document.getElementById("monthlySettings").style.display = "none";
-            document.getElementById("weeklySettings").style.display = "none";
-            document.getElementById("oneTimeOnlySettings").style.display = "none";
-        } else if (event.target.id == "frequencyOnetimeonly") {
-            document.getElementById("oneTimeOnlySettings").style.display = "block";
-            document.getElementById("monthlySettings").style.display = "none";
-            document.getElementById("weeklySettings").style.display = "none";
-            document.getElementById("dailySettings").style.display = "none";
-        } else {
-            $("#copyFrequencyModal").modal('toggle');
-        }
-    },
-    'click input[name="settingsMonthlyRadio"]': function(event) {
-        if (event.target.id == "settingsMonthlyEvery") {
-            $('.settingsMonthlyEveryOccurence').attr('disabled', false);
-            $('.settingsMonthlyDayOfWeek').attr('disabled', false);
-            $('.settingsMonthlySpecDay').attr('disabled', true);
-        } else if (event.target.id == "settingsMonthlyDay") {
-            $('.settingsMonthlySpecDay').attr('disabled', false);
-            $('.settingsMonthlyEveryOccurence').attr('disabled', true);
-            $('.settingsMonthlyDayOfWeek').attr('disabled', true);
-        } else {
-            $("#frequencyModal").modal('toggle');
-        }
-    },
-    'click input[name="dailyRadio"]': function(event) {
-        if (event.target.id == "dailyEveryDay") {
-            $('.dailyEveryXDays').attr('disabled', true);
-        } else if (event.target.id == "dailyWeekdays") {
-            $('.dailyEveryXDays').attr('disabled', true);
-        } else if (event.target.id == "dailyEvery") {
-            $('.dailyEveryXDays').attr('disabled', false);
-        } else {
-            $("#frequencyModal").modal('toggle');
-        }
-    },
     'click .btnAdmin': function(event) {
         $("#adminService").modal("toggle");
     },
+    'click .btnServiceCheck': function (event) {
+        let ipAddress = $(event.target).closest("tr").find('.colIPAddress').text();
+        let portNumber = $(event.target).closest("tr").find('.colPortNumber').text();
+        let CurDate = moment(new Date()).format("DD/MM/YYYY HH:mm:ss")
 
-    'click .close': function(event){
-        $("#editServiceChecker").modal("hide");
-        $("#adminService").modal("hide");
-        $("#copyFrequencyModal").modal("hide");
-        $("#machineSummaryList").modal("hide");
-        $("#machineDetailList").modal("hide");
-        $("#helpViewModal").modal("hide");
-        $("#tblServicesList_Modal").modal("hide");
-        
-    },
-
-    'click .btn-secondary': function(event){
-        $("#editServiceChecker").modal("hide");
-        $("#adminService").modal("hide");
-        $("#copyFrequencyModal").modal("hide");
-        $("#machineSummaryList").modal("hide");
-        $("#machineDetailList").modal("hide");
-        $("#helpViewModal").modal("hide");
-        $("#tblServicesList_Modal").modal("hide");
-    },    
-    'click .btn-light': function(event){
-        $("#helpViewModal").modal("hide");
-    },
-    'click .chkDatatable': function(event) {
-        var columns = $('#tblSerialNumberList th');
-        let columnDataValue = $(event.target).closest("div").find(".divcolumn").text();
-
-        $.each(columns, function(i, v) {
-            let className = v.classList;
-            let replaceClass = className[1];
-
-            if (v.innerText == columnDataValue) {
-                if ($(event.target).is(':checked')) {
-                    $("." + replaceClass + "").css('display', 'table-cell');
-                    $("." + replaceClass + "").css('padding', '.75rem');
-                    $("." + replaceClass + "").css('vertical-align', 'top');
-                } else {
-                    $("." + replaceClass + "").css('display', 'none');
-                }
-            }
-        });
-    },
-    'click .resetTable': function(event) {
-        var getcurrentCloudDetails = CloudUser.findOne({ _id: localStorage.getItem('mycloudLogonID'), clouddatabaseID: localStorage.getItem('mycloudLogonDBID') });
-        if (getcurrentCloudDetails) {
-            if (getcurrentCloudDetails._id.length > 0) {
-                var clientID = getcurrentCloudDetails._id;
-                var clientUsername = getcurrentCloudDetails.cloudUsername;
-                var clientEmail = getcurrentCloudDetails.cloudEmail;
-                var checkPrefDetails = CloudPreference.findOne({ userid: clientID, PrefName: 'tblSerialNumberList' });
-                if (checkPrefDetails) {
-                    CloudPreference.remove({ _id: checkPrefDetails._id }, function(err, idTag) {
-                        if (err) {
-
-                        } else {
-                            Meteor._reload.reload();
-                        }
-                    });
-
-                }
-            }
-        }
-    },
-    'click .saveTable': function(event) {
-        let lineItems = [];
-        $('.columnSettings').each(function(index) {
-            var $tblrow = $(this);
-            var colTitle = $tblrow.find(".divcolumn").text() || '';
-            var colWidth = $tblrow.find(".custom-range").val() || 0;
-            var colthClass = $tblrow.find(".divcolumn").attr("valueupdate") || '';
-            var colHidden = false;
-            if ($tblrow.find(".custom-control-input").is(':checked')) {
-                colHidden = false;
+        Meteor.call('checkService', ipAddress, portNumber, function(error, result) {
+            if (error) {
+                $(event.target).closest("tr").find('.colStatus').removeClass('bgcolor-green');
+                $(event.target).closest("tr").find('.colStatus').addClass('bgcolor-red');
+                $(event.target).closest("tr").find('.colStatus').text(CurDate);
             } else {
-                colHidden = true;
+                $(event.target).closest("tr").find('.colStatus').removeClass('bgcolor-red');
+                $(event.target).closest("tr").find('.colStatus').addClass('bgcolor-green');
+                $(event.target).closest("tr").find('.colStatus').text(CurDate);
             }
-            let lineItemObj = {
-                index: index,
-                label: colTitle,
-                hidden: colHidden,
-                width: colWidth,
-                thclass: colthClass
-            }
-
-            lineItems.push(lineItemObj);
         });
+    },
+    'click .btnServiceRestart': function (event) {
+        let ipAddress = $(event.target).closest("tr").find('.colIPAddress').text();
 
-        var getcurrentCloudDetails = CloudUser.findOne({ _id: localStorage.getItem('mycloudLogonID'), clouddatabaseID: localStorage.getItem('mycloudLogonDBID') });
-        if (getcurrentCloudDetails) {
-            if (getcurrentCloudDetails._id.length > 0) {
-                var clientID = getcurrentCloudDetails._id;
-                var clientUsername = getcurrentCloudDetails.cloudUsername;
-                var clientEmail = getcurrentCloudDetails.cloudEmail;
-                var checkPrefDetails = CloudPreference.findOne({ userid: clientID, PrefName: 'tblSerialNumberList' });
-                if (checkPrefDetails) {
-                    CloudPreference.update({ _id: checkPrefDetails._id }, {
-                        $set: {
-                            userid: clientID,
-                            username: clientUsername,
-                            useremail: clientEmail,
-                            PrefGroup: 'salesform',
-                            PrefName: 'tblSerialNumberList',
-                            published: true,
-                            customFields: lineItems,
-                            updatedAt: new Date()
-                        }
-                    }, function(err, idTag) {
-                        if (err) {
-                            $('#myModal2').modal('toggle');
-                        } else {
-                            $('#myModal2').modal('toggle');
-                        }
-                    });
-
-                } else {
-                    CloudPreference.insert({
-                        userid: clientID,
-                        username: clientUsername,
-                        useremail: clientEmail,
-                        PrefGroup: 'salesform',
-                        PrefName: 'tblSerialNumberList',
-                        published: true,
-                        customFields: lineItems,
-                        createdAt: new Date()
-                    }, function(err, idTag) {
-                        if (err) {
-                            $('#myModal2').modal('toggle');
-                        } else {
-                            $('#myModal2').modal('toggle');
-
-                        }
-                    });
-
-                }
+        if (Meteor.isClient) {
+            for(var i = 0; i < templateObject.adminList.length; i ++) {
+        Meteor.call('sendEmail', {
+                    from: "noreply@vs1cloud.com",
+                    to: templateObject.adminList[i].email,
+                    subject: "Service Checker",
+                    text: "Restart request, " + ipAddress,
+                    html: "",
+            attachments: undefined
+        }, function(error, result) {
+            if (error && error.error === "error") {
+                        console.log(error);              
+            } else {
+                        console.log("Email were sent to ");
+            }
+        });
             }
         }
     },
-    'blur .divcolumn': function(event) {
-        let columData = $(event.target).text();
-
-        let columnDatanIndex = $(event.target).closest("div.columnSettings").attr('id');
-
-        var datable = $('#tblSerialNumberList').DataTable();
-        var title = datable.column(columnDatanIndex).header();
-        $(title).html(columData);
-
+    'click .templateDownloadXLSX': function (e) {
+        e.preventDefault(); //stop the browser from following
+        window.location.href = "sample_imports/SampleServices.xlsx";
     },
-    'change .rngRange': function(event) {
-        let range = $(event.target).val();
-        // $(event.target).closest("div.divColWidth").find(".spWidth").html(range+'px');
-
-        // let columData = $(event.target).closest("div.divColWidth").find(".spWidth").attr("value");
-        let columnDataValue = $(event.target).closest("div").prev().find(".divcolumn").text();
-        var datable = $('#tblSerialNumberList th');
-        $.each(datable, function(i, v) {
-
-            if (v.innerText == columnDataValue) {
-                let className = v.className;
-                let replaceClass = className.replace(/ /g, ".");
-                $("." + replaceClass + "").css('width', range + 'px');
-
-            }
-        });
-
+    "click .templateDownload": function () {
+        let utilityService = new UtilityService();
+        let rows = [];
+        const filename = "SampleServices" + ".csv";
+        rows[0] = [
+            "Machine-1",
+            "110.145.181.218",
+            "4434",
+            "VS1_Cloud_DB_caca_aj_ac_OUxFnK",
+            "dene@vs1cloud.com",
+            "dene@123",
+            "This machine is ...",
+            "06/03/2023 20:30:30",
+        ];
+        utilityService.exportToCsv(rows, filename, "csv");
     },
-    'click .btnOpenSettings': function(event) {
-        let templateObject = Template.instance();
-        var columns = $('#tblSerialNumberList th');
+    'click .new_attachment_btn': function() {
+        $('#attachment-upload').trigger('click');
+    },
+    'change #attachment-upload': function (e) {
+        let templateObj = Template.instance();
+        var filename = $("#attachment-upload")[0].files[0]["name"];
+        var fileExtension = filename.split(".").pop().toLowerCase();
+        var validExtensions = ["csv", "txt", "xlsx"];
+        var validCSVExtensions = ["csv", "txt"];
 
-        const tableHeaderList = [];
-        let sTible = "";
-        let sWidth = "";
-        let sIndex = "";
-        let sVisible = "";
-        let columVisible = false;
-        let sClass = "";
-        $.each(columns, function(i, v) {
-            if (v.hidden == false) {
-                columVisible = true;
+        if (validExtensions.indexOf(fileExtension) == -1) {
+            swal("Invalid Format", "formats allowed are :" + validExtensions.join(", "), "error");
+            $(".file-name").text("");
+            $(".btnImport").Attr("disabled");
+        } else if (validCSVExtensions.indexOf(fileExtension) != -1) {
+            $(".file-name").text(filename);
+            let selectedFile = event.target.files[0];
+            templateObj.selectedFile.set(selectedFile);
+            if ($(".file-name").text() != "") {
+                $(".btnImport").removeAttr("disabled");
+            } else {
+                $(".btnImport").Attr("disabled");
             }
-            if ((v.className.includes("hiddenColumn"))) {
-                columVisible = false;
-            }
-            sWidth = v.style.width.replace('px', "");
+        } else if (fileExtension == "xlsx") {
+            $(".file-name").text(filename);
+            let selectedFile = event.target.files[0];
+            var oFile = selectedFile;
+            var reader = new FileReader();
+            // Ready The Event For When A File Gets Selected
+            reader.onload = function (e) {
+                var data = e.target.result;
+                data = new Uint8Array(data);
+                var workbook = XLSX.read(data, { type: "array" });
+                var result = {};
+                workbook.SheetNames.forEach(function (sheetName) {
+                var roa = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+                    header: 1,
+                });
+                var sCSV = XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+                templateObj.selectedFile.set(sCSV);
 
-            let datatablerecordObj = {
-                sTitle: v.innerText || '',
-                sWidth: sWidth || '',
-                sIndex: v.cellIndex || 0,
-                sVisible: columVisible || false,
-                sClass: v.className || ''
+                if (roa.length) result[sheetName] = roa;
+                });
+                // see the result, caution: it works after reader event is done.
             };
-            tableHeaderList.push(datatablerecordObj);
-        });
+            reader.readAsArrayBuffer(oFile);
 
-        templateObject.tableheaderrecords.set(tableHeaderList);
-    }
+            if ($(".file-name").text() != "") {
+                $(".btnImport").removeAttr("disabled");
+            } else {
+                $(".btnImport").Attr("disabled");
+            }
+        }
+    },
+    "click .btnImport": function () {
+        $(".fullScreenSpin").css("display", "inline-block");
+        let templateObject = Template.instance();
+        let objDetails;
+    
+        Papa.parse(templateObject.selectedFile.get(), {
+            complete: function (results) {
+                if (results.data.length > 0) {
+                    if (
+                        results.data[0][0] == "ID" &&
+                        results.data[0][1] == "Machine Name" &&
+                        results.data[0][2] == "Service Name" &&
+                        results.data[0][3] == "IP Address" &&
+                        results.data[0][4] == "Port Number" &&
+                        results.data[0][5] == "Database Name" &&
+                        results.data[0][6] == "User Name" &&
+                        results.data[0][7] == "Password" &&
+                        results.data[0][8] == "Description"&&
+                        results.data[0][9] == "Status"
+                    ) {
+                        
+                        let dataLength = results.data.length * 3000;
+                        setTimeout(async function () {
+                            window.open("/home", "_self");
+                            $(".fullScreenSpin").css("display", "none");
+                        }, parseInt(dataLength));
+
+                        for (let i = 0; i < results.data.length - 1; i++) {
+                            objDetails = [
+                                results.data[i + 1][0],
+                                results.data[i + 1][1],
+                                results.data[i + 1][2],
+                                results.data[i + 1][3],
+                                results.data[i + 1][4],
+                                results.data[i + 1][5],
+                                results.data[i + 1][6],
+                                results.data[i + 1][7],
+                                results.data[i + 1][8],
+                                results.data[i + 1][9]
+                            ];
+                            if (results.data[i + 1][1]) {
+                                if (results.data[i + 1][1] !== "") {
+                                
+                                    swal({
+                                        title: "Oooops...",
+                                        text: err,
+                                        type: "error",
+                                        showCancelButton: false,
+                                        confirmButtonText: "Try Again",
+                                    }).then((result) => {
+                                        if (result.value) {
+                                            window.open("/home", "_self");
+                                        } else if (result.dismiss === "cancel") {
+                                            window.open("/home", "_self");
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    } else {
+                        $(".fullScreenSpin").css("display", "none");
+                        swal(
+                            "Invalid Data Mapping fields ",
+                            "Please check that you are importing the correct file with the correct column headers.",
+                            "error"
+                        );
+                    }
+                } else {
+                    $(".fullScreenSpin").css("display", "none");
+                    swal(
+                        "Invalid Data Mapping fields ",
+                        "Please check that you are importing the correct file with the correct column headers.",
+                        "error"
+                    );
+                }
+            },
+        });
+    },
+    'click .btnRefresh': function () {
+        Meteor._reload.reload();
+        window.history.go(0);
+    },
 });
+
 Template.home.helpers({
 
 });

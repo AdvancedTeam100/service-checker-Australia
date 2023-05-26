@@ -1,0 +1,26 @@
+<template name="machinedetailpop">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>Machine Detail</h4><button type="button" class="close close-machine" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive divTemplate">
+                    <table id="tblMachineDetailList" style="width: 100%;" class="dataTable table table-striped table-bordered tblMachineDetailList">
+                        <thead>
+                            <tr class="dnd-moved">
+                                <th class="thID">ID</th>
+                                <th class="thDateTime">Date Time</th>
+                                <th class="thStatus">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal" type="button"><i class="fa fa-close" style="margin-right: 8px;"></i>Close</button>
+            </div>
+        </div>
+    </div>
+</template>

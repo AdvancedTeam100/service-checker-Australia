@@ -7,11 +7,15 @@ import '../imports/ui/lib/global/colResizable.js';
 
 // Import Pages
 import '../imports/ui/pages/home/home.js';
-import '../imports/ui/pages/edit/edit.js';
-import '../imports/ui/pages/admin/admin.js';
+import '../imports/ui/components/common/logspop/logspop.js';
+import '../imports/ui/components/common/machinesummarypop/machinesummarypop.js';
+import '../imports/ui/components/common/machinedetailpop/machinedetailpop.js';
+import '../imports/ui/components/common/admineditpop/admineditpop.js';
+import '../imports/ui/components/common/adminlistpop/adminlistpop.js';
 import '../imports/ui/pages/login/login.js';
 import '../imports/ui/pages/forgotpassword/forgotpassword.js';
 import '../imports/ui/pages/register/register.js';
+import '../imports/ui/pages/editdetail/editdetail.js';
 
 // Import Layout
 import '../imports/ui/layouts/login-layout/login-layout.js';
@@ -41,6 +45,7 @@ import '../imports/ui/components/common/copyfrequencypop/copyfrequencypop.js';
 
 // Import VS1 Templates
 import '../imports/ui/components/common/Help_Form/help_button.html';
+import '../imports/ui/components/common/import_template/import_template.html';
 
 import '../imports/ui/components/datatablelist/datatablelist.js';
 import '../imports/ui/components/template_buttons/export_import_print_display_button.js';

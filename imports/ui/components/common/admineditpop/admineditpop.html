@@ -1,0 +1,42 @@
+<template name="admineditpop">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered generated-id">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>
+                    <div id="modal-title" name="modal-title" style="float: left;">Edit Admin</div>
+                </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+            </div>
+            <div class="modal-body" style="background-color: #EDEDED;">
+                <input type="hidden" class="form-control" id="edtAdminFlag" name="edtAdminFlag" />
+                <input type="hidden" id="edtID" />
+                <div class="row">
+                    <div class="col-12 col-md-12">
+                        <div class="form-group" style="margin: 4px;"><label>Name</label>
+                            <input type="text" class="form-control" id="edtName" name="edtName">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-12">
+                        <div class="form-group" style="margin: 4px;"><label>Email Address</label>
+                            <input type="text" class="form-control" id="edtEmail" name="edtEmail">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-12">
+                        <div class="form-group" style="margin: 4px;"><label>Password</label>
+                            <input type="text" class="form-control" id="edtPsw" name="edtPsw">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-12">
+                        <div class="form-group" style="margin: 4px;"><label>SMS Number</label>
+                            <input type="text" class="form-control" id="edtSMSNumber" name="edtSMSNumber">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="background-color: #ededed;">
+                <button class="btn btn-success btnSaveAdmin vs1FirstButtonMargin" type="button" id="btnSaveAdmin" name="btnSaveAdmin"><i class="fa fa-save" style="margin-right: 5px;"></i>Save</button>
+                <button class="btn btn-secondary" data-dismiss="modal" type="button"><i class="fa fa-close" style="margin-right: 5px;"></i>Close</button>
+            </div>
+        </div>
+    </div>
+</template>

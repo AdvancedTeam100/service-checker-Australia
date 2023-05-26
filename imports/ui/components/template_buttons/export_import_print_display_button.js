@@ -34,7 +34,7 @@ Template.export_import_print_display_button.events({
       if(templateObject.data.tablename) {
         let tablename = templateObject.data.tablename;
         $('.fullScreenSpin').css('display','inline-block');
-        // jQuery('#'+tablename+'_wrapper .dt-buttons .btntabletocsv').trigger('click');
+        jQuery('#'+tablename+'_wrapper .dt-buttons .btntabletocsv').trigger('click');
         jQuery('#'+tablename+'_wrapper .dt-buttons .btntabletoexcel').click();
         $('.fullScreenSpin').css('display','none');
       }
